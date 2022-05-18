@@ -1,0 +1,23 @@
+{
+  "name": "linkedin-datascience-jobs-analysis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "dependencies": {
+    "linkedin-jobs-scraper": "^11.1.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quietcricket/linkedin-datascience-jobs-analysis.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/quietcricket/linkedin-datascience-jobs-analysis/issues"
+  },
+  "homepage": "https://github.com/quietcricket/linkedin-datascience-jobs-analysis#readme"
+}
