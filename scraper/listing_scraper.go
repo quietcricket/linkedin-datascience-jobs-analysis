@@ -25,7 +25,7 @@ func main() {
 	browserCtx, cancel2 := chromedp.NewContext(allocCtx)
 	defer cancel2()
 
-	// search("Data Scientist", "United States", browserCtx)
+	search("Data Scientist", "United States", browserCtx)
 	search("Data Scientist", "United Kingdom", browserCtx)
 	search("Data Scientist", "Canada", browserCtx)
 	search("Data Scientist", "Singapore", browserCtx)
