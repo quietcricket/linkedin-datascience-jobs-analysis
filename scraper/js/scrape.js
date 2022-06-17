@@ -11,11 +11,10 @@
 		window.LAST_INDEX = nodes.length;
 		window.LAST_TIMESTAMP = new Date().getTime();
 	} else {
-		if (new Date().getTime() - window.LAST_TIMESTAMP > 15000) {
+		if (new Date().getTime() - window.LAST_TIMESTAMP > 30000) {
 			window.LAST_TIMESTAMP = new Date().getTime();
 			result = "stop";
 		}
 	}
-	console.log("Result", result);
 	return result;
 })();

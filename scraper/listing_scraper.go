@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"net/url"
 	"os"
 	"strconv"
@@ -15,7 +14,7 @@ import (
 
 var scripts map[string]string = loadJs()
 
-func main() {
+func ScrapeListing() {
 	// Remove headless mode, easier to observe
 	opts := append(chromedp.DefaultExecAllocatorOptions[:], chromedp.WindowSize(1280, 800), chromedp.Flag("headless", false))
 
@@ -33,12 +32,13 @@ func main() {
 	search("Data Scientist", "China", browserCtx)
 }
 
+// TODO: add some mouse movement to fool the anti-scraping mechanism
 func search(keyword, location string, ctx context.Context) {
 
 	// open a file to store the data
 	t := time.Now()
 	filename := fmt.Sprintf("./data/%d%02d%02d-%s-%s.txt", t.Year(), t.Month(), t.Day(), slug.Make(keyword), slug.Make(location))
-	output, _ := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 644)
+	output, _ := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
 	defer output.Close()
 
 	// build the search url
@@ -53,7 +53,6 @@ func search(keyword, location string, ctx context.Context) {
 		chromedp.WaitVisible(".jobs-search__results-list"))
 
 	result := make(chan string)
-	defer close(result)
 	for {
 		go scrapeLinks(ctx, result)
 		line := <-result
@@ -75,10 +74,6 @@ func loadJs() map[string]string {
 	return m
 }
 
-func randDelay(low, high float64) time.Duration {
-	return time.Duration((rand.Float64()*(high-low) + low) * float64(time.Second))
-}
-
 func scrapeLinks(ctx context.Context, ch chan string) {
 	var res []byte
 	chromedp.Run(ctx,
@@ -86,11 +81,11 @@ func scrapeLinks(ctx context.Context, ch chan string) {
 		chromedp.EvaluateAsDevTools(scripts["scroll-listing"], nil),
 	)
 
-	time.Sleep(randDelay(0.7, 1.5))
+	time.Sleep(RandDuration(0.7, 1.5))
 
 	chromedp.Run(ctx, chromedp.EvaluateAsDevTools(scripts["show-more"], nil))
 
-	time.Sleep(randDelay(0.7, 1.5))
+	time.Sleep(RandDuration(0.7, 1.5))
 
 	result, _ := strconv.Unquote(string(res))
 	fmt.Printf("Links: %s", result)
