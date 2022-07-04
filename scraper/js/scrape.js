@@ -11,7 +11,7 @@
 		window.LAST_INDEX = nodes.length;
 		window.LAST_TIMESTAMP = new Date().getTime();
 	} else {
-		if (new Date().getTime() - window.LAST_TIMESTAMP > 30000) {
+		if (new Date().getTime() - window.LAST_TIMESTAMP > 20000) {
 			window.LAST_TIMESTAMP = new Date().getTime();
 			result = "stop";
 		}

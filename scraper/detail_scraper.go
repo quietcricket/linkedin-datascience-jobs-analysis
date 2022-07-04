@@ -37,6 +37,7 @@ func (log *ScraperLog) WriteLog(r *ScrapeResult) {
 	}
 	fmt.Println(line)
 	log.fh.WriteString(line + "\n")
+	log.fh.Sync()
 }
 
 func (log *ScraperLog) CheckLink(link string) (string, error) {
@@ -66,7 +67,13 @@ var completed = 0
 var concurrency = 3
 
 func ScrapeFolder() {
-	ScrapeDetail("./data/20220612-data-scientist-singapore.txt")
+	files, _ := os.ReadDir("./data")
+	for _, f := range files {
+		if strings.Contains(f.Name(), ".txt") {
+			// fmt.Println(f.Name())
+			ScrapeDetail("./data/" + f.Name())
+		}
+	}
 }
 
 func ScrapeDetail(filename string) {
@@ -74,12 +81,11 @@ func ScrapeDetail(filename string) {
 	queue = strings.Split(string(b), "\n")
 	queueIndex = -1
 	completed = 0
-	ch := make(chan ScrapeResult)
+	ch := make(chan ScrapeResult, concurrency)
 
 	for i := 0; i < concurrency; i++ {
 		queueIndex++
 		go scrape(queueIndex, ch)
-		time.Sleep(RandDuration(1, 3))
 	}
 
 	for r := range ch {
@@ -110,7 +116,6 @@ func ScrapeDetail(filename string) {
 		}
 		scraperLog.WriteLog(&r)
 	}
-	scraperLog.fh.Close()
 }
 
 func scrape(index int, ch chan ScrapeResult) {

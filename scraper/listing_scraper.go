@@ -17,6 +17,7 @@ var scripts map[string]string = loadJs()
 func ScrapeListing() {
 	// Remove headless mode, easier to observe
 	opts := append(chromedp.DefaultExecAllocatorOptions[:], chromedp.WindowSize(1280, 800), chromedp.Flag("headless", false))
+	// opts := append(chromedp.DefaultExecAllocatorOptions[:], chromedp.WindowSize(1280, 800))
 
 	allocCtx, cancel1 := chromedp.NewExecAllocator(context.Background(), opts...)
 	defer cancel1()
@@ -24,8 +25,8 @@ func ScrapeListing() {
 	browserCtx, cancel2 := chromedp.NewContext(allocCtx)
 	defer cancel2()
 
-	search("Data Scientist", "United States", browserCtx)
 	search("Data Scientist", "United Kingdom", browserCtx)
+	search("Data Scientist", "United States", browserCtx)
 	search("Data Scientist", "Canada", browserCtx)
 	search("Data Scientist", "Singapore", browserCtx)
 	search("Data Scientist", "Australia", browserCtx)
@@ -78,11 +79,13 @@ func scrapeLinks(ctx context.Context, ch chan string) {
 	var res []byte
 	chromedp.Run(ctx,
 		chromedp.EvaluateAsDevTools(scripts["scrape"], &res, chromedp.EvalAsValue),
-		chromedp.EvaluateAsDevTools(scripts["scroll-listing"], nil),
 	)
 
 	time.Sleep(RandDuration(0.7, 1.5))
 
+	chromedp.Run(ctx,
+		chromedp.EvaluateAsDevTools(scripts["scroll-listing"], nil),
+	)
 	chromedp.Run(ctx, chromedp.EvaluateAsDevTools(scripts["show-more"], nil))
 
 	time.Sleep(RandDuration(0.7, 1.5))

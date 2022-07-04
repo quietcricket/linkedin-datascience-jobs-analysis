@@ -8,5 +8,7 @@ func main() {
 		ScrapeListing()
 	case "detail":
 		ScrapeFolder()
+	case "json":
+		ProcessJson()
 	}
 }
