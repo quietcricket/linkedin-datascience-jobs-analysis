@@ -41,11 +41,15 @@ func (log *ScraperLog) WriteLog(r *ScrapeResult) {
 }
 
 func (log *ScraperLog) CheckLink(link string) (string, error) {
-	end := strings.Index(link, "?")
+	start := strings.Index(link, "https")
+	if start == -1 {
+		return link, errors.New("invalid")
+	}
+	end := strings.LastIndex(link, "?")
 	if end == -1 {
 		return link, errors.New("invalid")
 	}
-	l := link[strings.Index(link, "https"):end]
+	l := link[start:end]
 	_, ok := log.Records[l]
 	if ok {
 		return l, errors.New("duplicate")
@@ -64,13 +68,11 @@ var scraperLog = OpenLog("./data/detail-scraper.log")
 var queue []string
 var queueIndex = 0
 var completed = 0
-var concurrency = 3
 
 func ScrapeFolder() {
 	files, _ := os.ReadDir("./data")
 	for _, f := range files {
 		if strings.Contains(f.Name(), ".txt") {
-			// fmt.Println(f.Name())
 			ScrapeDetail("./data/" + f.Name())
 		}
 	}
@@ -81,12 +83,10 @@ func ScrapeDetail(filename string) {
 	queue = strings.Split(string(b), "\n")
 	queueIndex = -1
 	completed = 0
-	ch := make(chan ScrapeResult, concurrency)
+	ch := make(chan ScrapeResult)
 
-	for i := 0; i < concurrency; i++ {
-		queueIndex++
-		go scrape(queueIndex, ch)
-	}
+	queueIndex++
+	go scrape(queueIndex, ch)
 
 	for r := range ch {
 		completed++
