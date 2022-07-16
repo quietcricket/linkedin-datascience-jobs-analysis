@@ -4,3 +4,4 @@
 vendor
 scraper/sample.json
 *.exe
+.R*

@@ -1,0 +1,100 @@
+---
+title: "Data Scientist Jobs Analysis"
+author: "Shang Liang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+library(tidyverse)
+library(kable)
+```
+
+
+## Data Cleaning
+
+
+### Exclusions
+
+Not all results from LinkedIn's search are accurate. Besides "data scientist" jobs, other jobs like `Software Engineer` are listed. Possibly these role are under the same department or the job description contains the keyword. Although roles like `Machine Learning Engineer` or `Data Engineer` are more related to `Data Scientist`, this analysis will focus on pure `Data Scientist` jobs. To enforce it, a filter on the job title is apply to ensure that it contain `Data Scientist` keyword. 
+
+Job listings from China are mostly written in Chinese. For this analysis, they will be excluded. 
+```{r include=F}
+raw<-read_csv('./scraper/data/jobs.csv')
+df <- raw %>%
+  filter(grepl('data scientist', title, ignore.case = T),jobLocation.address.addressCountry!='CN') %>%
+  select(
+    title,
+    company = identifier.name,
+    datePosted,
+    validThrough,
+    employmentType,
+    industry,
+    country = jobLocation.address.addressCountry,
+    city = jobLocation.address.addressLocality,
+    education = educationRequirements.credentialCategory,
+    salaryCurrency = baseSalary.currency,
+    salaryMax = baseSalary.value.maxValue,
+    salaryMin = baseSalary.value.minValue,
+  )
+```
+
+### Adding Seniority
+
+The seniority of a job will be derived from the job title. Based on the observation of the data, a keyword adjacent to `Data Scientist` normally indicates the level, e.g. Senior/Sr., Lead, Principle, Associate/Asso. 
+
+```{r}
+deriveLevel<-function(s) {
+  s<-str_to_lower(s)
+  s<-str_replace_all(s,"[()-:]","")
+  level=""
+  # try to match "senior level", "junior level" etc
+  p <- str_extract(s, "[a-zA-Z0-9\\.]+\\s+level")
+  if(is.na(p)) {
+    # check if any useful word in front of "data scientist"
+    p <- str_extract(s, "[a-zA-Z0-9\\.]+\\s+data scientist")
+    # if nothing in front is useful, try the word behind
+    if (is.na(p)) {
+      p <- str_extract(s, "[dD]ata [sS]cientist\\s+[a-zA-Z0-9\\.]+")
+      if (!is.na(p)) {
+        level <- substr(p, 15, str_length(p))
+      }
+    } else{
+      level <- substr(p, 0, str_length(p) - 15)
+    }
+  }else{
+    level<-substr(p,0,str_length(p)-6)
+  }
+  
+  if (level %in% c("2", "ii")) {
+    level = ""
+  } else if (level %in% c("sr", "3", "ii")) {
+    level <- "senior"
+  } else if (level %in% c("jr", "1", "i", "associate", "asso")) {
+    level <- "junior"
+  } else if (level %in% c("principle", "lead", "4", "iv", "v", "5")) {
+    level <- "staff"
+  }
+  if (!(level %in% c("junior", "senior", "staff"))) {
+    level <- ""
+  }
+  level
+}
+df$level<-sapply(df$title,deriveLevel)
+arrange(as.data.frame(table(df$level)),desc(Freq))
+```
+
+## Jobs by company
+```{r}
+df %>%
+  filter(country == 'SG') %>%
+  group_by(company) %>%
+  summarise(openings=n()) %>%
+  arrange(-openings)
+
+```
+```{r}
+df %>% filter(grepl('manager',title,ignore.case=T),country=='SG') %>%
+  arrange(validThrough)
+```

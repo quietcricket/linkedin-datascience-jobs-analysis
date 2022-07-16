@@ -21,7 +21,9 @@ func OpenLog(path string) ScraperLog {
 	buff, err := os.ReadFile(path)
 	if err == nil {
 		for _, l := range strings.Split(string(buff), "\n") {
-			log.Records[strings.Split(l, ",")[0]] = true
+			if !strings.Contains(l, "ERROR:") {
+				log.Records[strings.Split(l, ",")[0]] = true
+			}
 		}
 	}
 	log.fh, _ = os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
@@ -31,7 +33,7 @@ func OpenLog(path string) ScraperLog {
 func (log *ScraperLog) WriteLog(r *ScrapeResult) {
 	line := r.link + ", "
 	if len(r.errMessage) > 1 {
-		line += "ERROR: " + r.errMessage
+		line += r.errMessage
 	} else {
 		line += "SUCCESS"
 	}
@@ -103,16 +105,18 @@ func ScrapeDetail(filename string) {
 		if r.errMessage == "duplicate" || r.errMessage == "invalid" {
 			continue
 		}
-		time.Sleep(RandDuration(1, 3))
+		time.Sleep(RandDuration(1.5, 3))
 		n := r.link[strings.LastIndex(r.link, "-")+1:]
 		outputPath := fmt.Sprintf("./data/json/%s.json", n)
 		reg := regexp.MustCompile(`(?s)<script type=\"application/ld\+json\">([^<]+)?`)
 		regMatch := reg.FindStringSubmatch(string(r.body))
 		if len(regMatch) == 2 {
 			os.WriteFile(outputPath, []byte(regMatch[1]), 0644)
+		} else if len(r.body) < 5000 {
+			r.errMessage = "Blocked: Authwall"
 		} else {
 			os.WriteFile(strings.ReplaceAll(outputPath, "json", "html"), r.body, 0644)
-			r.errMessage = "JSON Not Found"
+			r.errMessage = "Error: JSON Not Found"
 		}
 		scraperLog.WriteLog(&r)
 	}
