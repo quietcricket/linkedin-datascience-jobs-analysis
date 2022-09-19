@@ -21,7 +21,7 @@ func OpenLog(path string) ScraperLog {
 	buff, err := os.ReadFile(path)
 	if err == nil {
 		for _, l := range strings.Split(string(buff), "\n") {
-			if !strings.Contains(l, "ERROR:") {
+			if !strings.Contains(l, "Blocked:") {
 				log.Records[strings.Split(l, ",")[0]] = true
 			}
 		}

@@ -3,5 +3,7 @@
 /data*/*.json
 vendor
 scraper/sample.json
+scraper/scraper
 *.exe
 .R*
+.Rproj.user

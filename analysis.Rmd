@@ -8,7 +8,6 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T)
 library(tidyverse)
-library(kable)
 ```
 
 
@@ -39,50 +38,62 @@ df <- raw %>%
     salaryMin = baseSalary.value.minValue,
   )
 ```
-
+b
 ### Adding Seniority
 
-The seniority of a job will be derived from the job title. Based on the observation of the data, a keyword adjacent to `Data Scientist` normally indicates the level, e.g. Senior/Sr., Lead, Principle, Associate/Asso. 
+The seniority of a job will be derived from the job title. Based on the observation of the data, a keyword near to `Data Scientist` normally indicates the level. The following 4 patterns are observer (*X* denoting the job level keyword).
+
+* level *X* data scientist
+* data scientist (level *X*)
+* *X* data scientist
+* data scientist *X* 
+
+The most common levels are  
+
+* Junior Data Scientist
+* Data Scientist
+* Senior Data Scientist
+* Staff Data Scientist
+
+There are a few Lead and Principal titles and they are grouped together as `Staff` level. The level extraction also handles abbreviations like snr, sr for Senior and jr for Junior.  
+
+A different notation is Data Scientist I/1, II/2, III/3, IV/4. They are mapped to the Junior to Staff level accordingly. 
 
 ```{r}
+
+cleanLevel <- function(l) {
+  if (l %in% c("senior", "sr", "3", "iii")) {
+    return("senior")
+  } else if (l %in% c("junior","jr", "1", "i", "associate", "asso")) {
+    return("junior")
+  } else if (l %in% c("staff", "principal", "lead", "4", "iv", "v", "5")) {
+    return("staff")
+  }
+  NA
+}
 deriveLevel<-function(s) {
   s<-str_to_lower(s)
-  s<-str_replace_all(s,"[()-:]","")
-  level=""
-  # try to match "senior level", "junior level" etc
-  p <- str_extract(s, "[a-zA-Z0-9\\.]+\\s+level")
-  if(is.na(p)) {
-    # check if any useful word in front of "data scientist"
-    p <- str_extract(s, "[a-zA-Z0-9\\.]+\\s+data scientist")
-    # if nothing in front is useful, try the word behind
-    if (is.na(p)) {
-      p <- str_extract(s, "[dD]ata [sS]cientist\\s+[a-zA-Z0-9\\.]+")
-      if (!is.na(p)) {
-        level <- substr(p, 15, str_length(p))
-      }
-    } else{
-      level <- substr(p, 0, str_length(p) - 15)
-    }
-  }else{
-    level<-substr(p,0,str_length(p)-6)
+  # Remove special characters to have better word boundaries
+  s<-str_replace_all(s,"[()-:/]"," ")
+  # keyword check on "senior", "junior", "staff", "principal"
+  # some posting has multiple keywords like "senior/staff", will take the first occurrence
+  p<-str_extract(s,"\\bsenior\\b|\\bjunior\\b|staff\\b|principal\\b")
+  
+  if(!is.na(p)){
+    # Found a common keyword
+   return(cleanLevel(p))
   }
   
-  if (level %in% c("2", "ii")) {
-    level = ""
-  } else if (level %in% c("sr", "3", "ii")) {
-    level <- "senior"
-  } else if (level %in% c("jr", "1", "i", "associate", "asso")) {
-    level <- "junior"
-  } else if (level %in% c("principle", "lead", "4", "iv", "v", "5")) {
-    level <- "staff"
+  # match pattern `scientist 1,2,3,4,i,ii,iii,iv` and `level 1,2,3,4,i,ii,iii,iv`
+  p <- str_extract(s, "(data scientist)|level\\s+[iv0-9]+")
+  if(!is.na(p)){
+    arr<-str_split(p," ",simplify = T)
+    return(cleanLevel(arr[length(arr)]))
   }
-  if (!(level %in% c("junior", "senior", "staff"))) {
-    level <- ""
-  }
-  level
+  
 }
 df$level<-sapply(df$title,deriveLevel)
-arrange(as.data.frame(table(df$level)),desc(Freq))
+# arrange(as.data.frame(table(df$level)),desc(Freq))
 ```
 
 ## Jobs by company
@@ -95,6 +106,6 @@ df %>%
 
 ```
 ```{r}
-df %>% filter(grepl('manager',title,ignore.case=T),country=='SG') %>%
+df %>% filter(grepl('manager',title,ignore.case=T)) %>%
   arrange(validThrough)
 ```

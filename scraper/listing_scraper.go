@@ -16,7 +16,7 @@ var scripts map[string]string = loadJs()
 
 func ScrapeListing() {
 	// Remove headless mode, easier to observe
-	opts := append(chromedp.DefaultExecAllocatorOptions[:], chromedp.WindowSize(1280, 800), chromedp.Flag("headless", false))
+	opts := append(chromedp.DefaultExecAllocatorOptions[:], chromedp.WindowSize(1280, 800), chromedp.Flag("headless", false),chromedp.UserDataDir("/home/pi/.config/chromium/"), chromedp.Flag("profile-directory","Default"))
 	// opts := append(chromedp.DefaultExecAllocatorOptions[:], chromedp.WindowSize(1280, 800))
 
 	allocCtx, cancel1 := chromedp.NewExecAllocator(context.Background(), opts...)
@@ -25,10 +25,10 @@ func ScrapeListing() {
 	browserCtx, cancel2 := chromedp.NewContext(allocCtx)
 	defer cancel2()
 
-	search("Data Scientist", "United Kingdom", browserCtx)
-	search("Data Scientist", "United States", browserCtx)
-	search("Data Scientist", "Canada", browserCtx)
 	search("Data Scientist", "Singapore", browserCtx)
+	search("Data Scientist", "United States", browserCtx)
+	search("Data Scientist", "United Kingdom", browserCtx)
+	search("Data Scientist", "Canada", browserCtx)
 	search("Data Scientist", "Australia", browserCtx)
 	search("Data Scientist", "China", browserCtx)
 }
